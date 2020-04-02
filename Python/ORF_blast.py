@@ -1,22 +1,24 @@
-import os
-from setuptools import find_packages, setup
-
-from Bio import NCBIWWW, NCBIXML
+from Bio.Blast import NCBIWWW, NCBIXML
 from ORF_parse_db import parse_database
-
-header = "jantjepantje"
-sequence = "attgaaagtcaatatttatcagactctaaaaaaattgttagagaaagaattattccttgggaaggattagcaagggctgaagttatatcggaggatgatgctaatcatattaaaattttagaaaagcagtcattagaaaataaaaattctact "
-orf_sequence = "attgaaagtaatattatcagactctaaaaaaattgttagagaaagaattattccttgggaaggattagcaagggctgaagttatatcggaggatgatgctaat"
-orf_startpos = 10
-orf_endpos = 100
-
+import sys
 
 
 def main():
+    header, sequence, orf_sequence, orf_startpos, orf_endpos = get_args()
     blast_record = execute_BLASTp(sequence)
     accessioncodes, query_cover, organisms, protein_names, e_values, identities\
         = create_lists(blast_record)
     parse_database([header, sequence, orf_sequence, orf_startpos, orf_endpos, accessioncodes, query_cover, organisms, protein_names, e_values, identities], "blastx_results")
+
+
+def get_args():
+    header = sys.argv[1]
+    sequence = sys.argv[2]
+    orf_sequence = sys.argv[3]
+    orf_startpos = sys.argv[4]
+    orf_endpos = sys.argv[5]
+
+    return header, sequence, orf_sequence, orf_startpos, orf_endpos
 
 def execute_BLASTp(sequence):
     """"This function uses NCBIWWW.qblast to perform a blastx.
@@ -26,11 +28,11 @@ def execute_BLASTp(sequence):
 
     print("Blasting sequence:", sequence)
 
-    # result_handle = NCBIWWW.qblast("blastx", "nr", sequence)
+    result_handle = NCBIWWW.qblast("blastx", "nr", sequence)
 
-    # with open("my_blast.xml", "w") as out_handle:
-    #     out_handle.write(result_handle.read())
-    # result_handle.close()
+    with open("my_blast.xml", "w") as out_handle:
+        out_handle.write(result_handle.read())
+    result_handle.close()
 
     result_handle = open("my_blast.xml")
     blast_record = NCBIXML.read(result_handle)
