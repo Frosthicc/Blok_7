@@ -66,7 +66,6 @@ def parse_orf_results(list):
         parse_database([header, sequence], "sequence")
         seq_id = get_seq_id(sequence)
     else:
-        print("ja")
         update_information(seq_id[0])
 
     cursor, sql_connection = get_cursor()
@@ -83,7 +82,6 @@ def parse_sequence(list):
 
     seq_id = get_seq_id(sequence)
     if seq_id is None:
-        print("nee")
         parse_database([sequence], "reference_seq")
         refseq_id = get_refseq_id(sequence)
         parse_database([header], "reference_header")
@@ -176,11 +174,7 @@ def parse_reference_header(list):
 
 def parse_information(list):
     seq_id = list[0]
-    print(seq_id)
-    print(seq_id)
     today = date.today()
-
-    print(today)
 
     cursor, sql_connection = get_cursor()
     cursor.execute(
@@ -193,8 +187,6 @@ def parse_information(list):
 
 def update_information(seq_id):
     today = date.today()
-
-    print(today)
 
     cursor, sql_connection = get_cursor()
     cursor.execute(
@@ -209,7 +201,6 @@ def update_information(seq_id):
 def get_seq_id(sequence):
     cursor, sql_connection = get_cursor()
 
-    print(sequence)
     cursor.execute(
         "select seq_id "
         "from sequence "
@@ -221,9 +212,6 @@ def get_seq_id(sequence):
     results = cursor.fetchone()
     cursor.close()
     sql_connection.close()
-
-    print(results)
-
 
     return results
 
