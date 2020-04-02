@@ -1,0 +1,53 @@
+# Author       : Paul Verhoeven
+# Version      : 0.1
+# Date         : 2020-01-04
+# last update  : 2020-01-04
+
+
+class Seq(object):
+    def __init__(self, sequence, header):
+        self._sequence = sequence.lower()
+        self._header = header.lower()
+
+    def rna_to_dna(self):
+        self._sequence = self._sequence.replace('u', 't')
+
+    def get_header(self):
+        return self._header
+
+    def get_seq(self):
+        return self._sequence
+
+    def get_info(self):
+        print('Header = ', self._header)
+        print('sequence = ', self._sequence)
+
+
+class Orf(object):
+    def __init__(self, start, stop, seq):
+        self._startpos = start
+        self._endpos = stop
+        self._frameseq = seq
+
+    def set_startpos(self, position):
+        self._startpos = position
+
+    def set_endpos(self, position):
+        self._endpos = position
+
+    def set_frameseq(self, seq):
+        self._frameseq = seq
+
+    def get_startpos(self):
+        return self._startpos
+
+    def get_endpos(self):
+        return self._endpos
+
+    def get_frameseq(self):
+        return self._frameseq
+
+    def get_info(self):
+        print('Startpos = ', self._startpos)
+        print('Endpos = ', self._endpos)
+        print('Sequence = ', self._frameseq)
