@@ -14,7 +14,7 @@ def load_sequence():
     """
     seq = ''
     header = ''
-    file = "test.txt"
+    file = sys.argv[1]
     with open(file, 'r') as file:
         for line in file:
             line = line.strip('\n')
@@ -37,39 +37,30 @@ def predict_orf(data):
         data.rna_to_dna()
     seq = data.get_seq()
     orf_data = []
-    orf_seq = []
+    orf_building = []
+    # init building list
+    for i in range(3):
+        orf_building.append([False, 0, ''])
+
+    # start looking for ORFs
     for i in range(0, len(seq), 3):
-        frame_1 = seq[i:i + 3]
-        frame_2 = seq[i - 2: i + 1]
-        frame_3 = seq[i - 1: i + 2]
+        frame = [seq[i:i + 3], seq[i - 2: i + 1], seq[i - 1: i + 2]]
+        start = [i+1, i-1, i]
+        stop = [i+3, i+1, i+2]
 
-        if len(frame_1) == 3:
-            if len(orf_data) == 0:
-                orf_data.append(Orf(i+1, i+3, ''))
-                orf_seq.append(frame_1)
-            else:
-                orf_seq[0] += frame_1
-                orf_data[0].set_endpos(i+3)
+        for x in range(len(frame)):
+            if frame[x] == 'atg':
+                orf_building[x][2] += frame[x]
+                if not orf_building[x][0]:
+                    orf_building[x][1] = start[x]
+                orf_building[x][0] = True
 
-        if len(frame_2) == 3:
-            if len(orf_data) == 1:
-                orf_data.append(Orf(i-1, i+1, ''))
-                orf_seq.append(frame_2)
-            else:
-                orf_seq[1] += frame_2
-                orf_data[1].set_endpos(i+1)
+            elif orf_building[x][0]:
+                orf_building[x][2] += frame[x]
+                if frame[x] in ['tga', 'taa', 'tag']:
+                    orf_data.append(Orf(orf_building[x][1], stop[x], orf_building[x][2]))
+                    orf_building[x][0] = False
 
-        if len(frame_3) == 3:
-            if len(orf_data) == 2:
-                orf_data.append(Orf(i, i+2, ''))
-                orf_seq.append(frame_3)
-            else:
-                orf_seq[2] += frame_3
-                orf_data[2].set_endpos(i+2)
-
-    for i in range(len(orf_data)):
-        orf_data[i].set_frameseq(orf_seq[i])
-    del orf_seq
     return orf_data
 
 
@@ -79,7 +70,7 @@ def write_data(data, orf_data):
     :param data: Seq object initiated in load_sequence() function
     :param orf_data: List with Orf objects initiated in predict_orf() function
     """
-    with open('placeholder.txt', 'a') as save:
+    with open(sys.argv[2], 'w') as save:
         save.write(data.get_info())
         for i in range(len(orf_data)):
             save.write(orf_data[i].get_object_data())
