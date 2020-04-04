@@ -1,15 +1,12 @@
 from objects import Orf, Seq
-
-
-def load_user_data():
-    print('doe dingen')
-
+import sys
 
 def load_sequence():
     seq = ''
     header = ''
-
-    with open('test.txt', 'r') as file:
+    # file = sys.argv[1]
+    file = "test.txt"
+    with open(file, 'r') as file:
         for line in file:
             line = line.strip('\n')
             if line.startswith('>'):
@@ -37,7 +34,7 @@ def predict_orf(data):
                 orf_data.append(Orf(i+1, i+3, ''))
                 orf_seq.append(frame_1)
             else:
-                orf_seq += frame_1
+                orf_seq[0] += frame_1
                 orf_data[0].set_endpos(i+3)
 
         if len(frame_2) == 3:
@@ -45,7 +42,7 @@ def predict_orf(data):
                 orf_data.append(Orf(i-1, i+1, ''))
                 orf_seq.append(frame_2)
             else:
-                orf_seq += frame_2
+                orf_seq[1] += frame_2
                 orf_data[1].set_endpos(i+1)
 
         if len(frame_3) == 3:
@@ -53,19 +50,27 @@ def predict_orf(data):
                 orf_data.append(Orf(i, i+2, ''))
                 orf_seq.append(frame_3)
             else:
-                orf_seq += frame_3
+                orf_seq[2] += frame_3
                 orf_data[2].set_endpos(i+2)
 
     for i in range(len(orf_data)):
         orf_data[i].set_frameseq(orf_seq[i])
-        orf_data[i].get_info()
     del orf_seq
     return orf_data
 
 
+def write_data(data, orf_data):
+    with open('placeholder.txt', 'a') as save:
+        save.write(data.get_info())
+        for i in range(len(orf_data)):
+            save.write(orf_data[i].get_object_data())
+            save.write('\n')
+
+
 def main():
     data = load_sequence()
-    predict_orf(data)
+    orf_data = predict_orf(data)
+    write_data(data, orf_data)
 
 
 main()

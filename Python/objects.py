@@ -19,8 +19,7 @@ class Seq(object):
         return self._sequence
 
     def get_info(self):
-        print('Header = ', self._header)
-        print('sequence = ', self._sequence)
+        return f'{self.get_header()}\n{self.get_seq()}\n'
 
 
 class Orf(object):
@@ -47,7 +46,6 @@ class Orf(object):
     def get_frameseq(self):
         return self._frameseq
 
-    def get_info(self):
-        print('Startpos = ', self._startpos)
-        print('Endpos = ', self._endpos)
-        print('Sequence = ', self._frameseq)
+    def get_object_data(self):
+        return f'{self._frameseq}\t{self._startpos}\t{self._endpos}'
+
