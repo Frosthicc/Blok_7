@@ -1,13 +1,13 @@
 # Author       : Paul Verhoeven
-# Version      : 0.1
+# Version      : 1.0
 # Date         : 2020-01-04
 # last update  : 2020-01-04
 
 
 class Seq(object):
     def __init__(self, sequence, header):
-        self._sequence = sequence.lower()
-        self._header = header.lower()
+        self._sequence = sequence
+        self._header = header
 
     def rna_to_dna(self):
         self._sequence = self._sequence.replace('u', 't')
