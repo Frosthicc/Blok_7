@@ -4,8 +4,7 @@ import sys
 def load_sequence():
     seq = ''
     header = ''
-    # file = sys.argv[1]
-    file = "test.txt"
+    file = sys.argv[1]
     with open(file, 'r') as file:
         for line in file:
             line = line.strip('\n')
