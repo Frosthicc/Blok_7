@@ -79,6 +79,9 @@ def write_data(data, orf_data):
 
 
 def main():
+    """
+    Main function calls upon all other functions.
+    """
     data = load_sequence()
     orf_data = predict_orf(data)
     write_data(data, orf_data)
