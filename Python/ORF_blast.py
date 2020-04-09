@@ -1,24 +1,20 @@
-from Bio.Blast import NCBIWWW, NCBIXML
-from ORF_parse_db import parse_database
-import sys
+""""
+ORF_blast
+Datum: 09-04-2020
+Auteur: Bart Jolink
+"""
 
+from Bio.Blast import NCBIWWW, NCBIXML
+from ORF_parse_db import parse_database, temp_reader
 
 def main():
-    header, sequence, orf_sequence, orf_startpos, orf_endpos = get_args()
-    blast_record = execute_BLASTp(sequence)
-    accessioncodes, query_cover, organisms, protein_names, e_values, identities\
-        = create_lists(blast_record)
-    parse_database([header, sequence, orf_sequence, orf_startpos, orf_endpos, accessioncodes, query_cover, organisms, protein_names, e_values, identities], "blastx_results")
+    header, sequence, orfseqs, startpos, endpos = temp_reader()
+    for i in range(len(orfseqs)):
+        blast_record = execute_BLASTp(orfseqs[i])
+        accessioncodes, query_cover, organisms, protein_names, e_values, identities\
+            = create_lists(blast_record)
+        parse_database([header, sequence, orfseqs[i], startpos[i], endpos[i], accessioncodes, query_cover, organisms, protein_names, e_values, identities], "blastx_results")
 
-
-def get_args():
-    header = sys.argv[1]
-    sequence = sys.argv[2]
-    orf_sequence = sys.argv[3]
-    orf_startpos = sys.argv[4]
-    orf_endpos = sys.argv[5]
-
-    return header, sequence, orf_sequence, orf_startpos, orf_endpos
 
 def execute_BLASTp(sequence):
     """"This function uses NCBIWWW.qblast to perform a blastx.
@@ -47,45 +43,37 @@ def create_lists(blast_record):
     Input is the blast_record (execute_BLASTx)
     Output is multiple lists consisting of information about the blast
     results. """
-
+    print(blast_record)
     result_count = 0
-    titles, accessioncodes, max_scores, query_cover, identities, gaps, \
-    organisms, protein_names, sequence_header, lengths, e_values, \
-    querys, matches, subjects = [], [], [], [], [], [], [], [], [], [], [], [], [], []
+    accessioncodes, query_cover, identities, organisms, protein_names, e_values\
+        = [], [], [], [], [], []
     for alignment in blast_record.alignments:
         for hsp in alignment.hsps:
             if result_count < 10:
-                if hsp.expect < 1e-3:
-                    titles.append(alignment.title.replace("'", ""))
-                    accessioncodes.append(alignment.accession)
-                    max_scores.append(hsp.bits)
-                    query_cover.append(float((hsp.query_end -
-                                              hsp.query_start)
-                                             / 300) * 100)
-                    identities.append(
-                        (hsp.identities / hsp.align_length)
-                        * 100)
-                    gaps.append(hsp.gaps)
-                    if alignment.title[0:2] == 'gi':
-                        organisms.append(alignment.title.split(">")[0]
-                                         .split("|")[4].split("[")[1]
-                                         [:-1].strip("]")
-                                         .replace("'", ""))
-                    else:
-                        organisms.append(alignment.title.split(">")[0]
-                                         .split("|")[2].split("[")[1]
-                                         [:-1].strip("]")
-                                         .replace("'", ""))
-                    protein_names.append(alignment.title.split("|")[2]
-                                         .split("[")[0][1:]
-                                         .replace("'", ""))
-                    lengths.append(alignment.length)
-                    e_values.append(hsp.expect)
-                    querys.append(hsp.query)
-                    matches.append(hsp.match)
-                    subjects.append(hsp.sbjct)
-                    result_count += 1
+                accessioncodes.append(alignment.accession)
+                query_cover.append(float((hsp.query_end -
+                                          hsp.query_start)
+                                         / 300) * 100)
+                identities.append(
+                    (hsp.identities / hsp.align_length)
+                    * 100)
+                if alignment.title[0:2] == 'gi':
+                    organisms.append(alignment.title.split(">")[0]
+                                     .split("|")[4].split("[")[1]
+                                     [:-1].strip("]")
+                                     .replace("'", ""))
+                else:
+                    organisms.append(alignment.title.split(">")[0]
+                                     .split("|")[2].split("[")[1]
+                                     [:-1].strip("]")
+                                     .replace("'", ""))
+                protein_names.append(alignment.title.split("|")[2]
+                                     .split("[")[0][1:]
+                                     .replace("'", ""))
+                e_values.append(hsp.expect)
+                result_count += 1
 
+    print(accessioncodes, query_cover, organisms, protein_names, e_values, identities)
     return accessioncodes, query_cover, organisms, protein_names, e_values, identities
 
 main()

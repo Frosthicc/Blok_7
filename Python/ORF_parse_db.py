@@ -1,8 +1,25 @@
+""""
+ORF_parse_db
+Datum: 09-04-2020
+Auteur: Bart Jolink
+"""
+
 import mysql.connector
 from datetime import date
+import sys
+
+def main():
+    """"Checks if any arguments are given.
+    """
+    if len(sys.argv)>1:
+        parse_database(temp_reader(), sys.argv[1])
 
 
 def parse_database(list, method):
+    """"Function directs lists to a certain method.
+    Method is input for the direct.
+    """
+
     if method == "blastx_results":
         parse_blastx_results(list)
 
@@ -27,11 +44,23 @@ def parse_database(list, method):
     if method == "information":
         parse_information(list)
 
+
 def parse_blastx_results(list):
+    """"This function parses blastx results in database.
+    Input is list with headers, sequences, orf sequences,
+    orf_startpos and orf_endpos, accessioncodes, query_cover, organisms,
+    protein_names, e_values, identities.
+    """
     header, sequence, orf_sequence, orf_startpos, orf_endpos, \
     accessioncodes, query_cover, organisms, protein_names, e_values, identities \
         = list[0], list[1], list[2], list[3], list[4], list[5],\
           list[6], list[7], list[8], list[9], list[10]
+    print(header)
+    print(sequence)
+    print(orf_sequence)
+    print(orf_startpos, orf_endpos)
+    print(accessioncodes, query_cover, organisms, protein_names,
+          e_values, identities)
 
     orf_id = get_orf_id(orf_sequence)
     if orf_id is None:
@@ -59,26 +88,52 @@ def parse_blastx_results(list):
 
 
 def parse_orf_results(list):
+    """"This function parses orf results in database.
+    Input is list with headers, sequences, orf sequences,
+    orf_startpos and orf_endpos
+    """
     header, sequence, orf_sequence, orf_startpos, orf_endpos = list[0], list[1], list[2], list[3], list[4]
 
-    seq_id = get_seq_id(sequence)
-    if seq_id is None:
-        parse_database([header, sequence], "sequence")
-        seq_id = get_seq_id(sequence)
-    else:
-        print("ja")
-        update_information(seq_id[0])
+    try:
+        test = orf_sequence[0][0]
+        for i in range(len(orf_sequence)):
+            seq_id = get_seq_id(sequence)
+            if seq_id is None:
+                parse_database([header, sequence], "sequence")
+                seq_id = get_seq_id(sequence)
+            else:
+                update_information(seq_id[0])
+            cursor, sql_connection = get_cursor()
+            cursor.execute(
+                "insert into orf_results(orf_id, seq_id, orf_start, orf_stop, orf_sequence)"
+                "values(null, '{}', '{}', '{}', '{}');"
+                .format(seq_id[0], orf_startpos[i], orf_endpos[i],
+                        orf_sequence[i]))
+            sql_connection.commit()
+            cursor.close()
+            sql_connection.close()
 
-    cursor, sql_connection = get_cursor()
-    cursor.execute("insert into orf_results(orf_id, seq_id, orf_start, orf_stop, orf_sequence)"
-                   "values(null, '{}', '{}', '{}', '{}');"
-                   .format(seq_id[0], orf_startpos, orf_endpos, orf_sequence))
-    sql_connection.commit()
-    cursor.close()
-    sql_connection.close()
+    except IndexError:
+        seq_id = get_seq_id(sequence)
+        if seq_id is None:
+            parse_database([header, sequence], "sequence")
+            seq_id = get_seq_id(sequence)
+        else:
+            update_information(seq_id[0])
+
+        cursor, sql_connection = get_cursor()
+        cursor.execute("insert into orf_results(orf_id, seq_id, orf_start, orf_stop, orf_sequence)"
+                       "values(null, '{}', '{}', '{}', '{}');"
+                       .format(seq_id[0], orf_startpos, orf_endpos, orf_sequence))
+        sql_connection.commit()
+        cursor.close()
+        sql_connection.close()
 
 
 def parse_sequence(list):
+    """"This function parses sequence in database.
+    Input is list with headers and sequences.
+    """
     header, sequence = list[0], list[1]
 
     seq_id = get_seq_id(sequence)
@@ -88,6 +143,7 @@ def parse_sequence(list):
         refseq_id = get_refseq_id(sequence)
         parse_database([header], "reference_header")
         refheader_id = get_refheader_id(header)
+        print("@!@!@#!@#!@", refseq_id, refheader_id)
         cursor, sql_connection = get_cursor()
         cursor.execute("insert into sequence(seq_id, refseq_id, refheader_id)"
                        "values(null, '{}', '{}');"
@@ -101,6 +157,9 @@ def parse_sequence(list):
 
 
 def parse_organism(list):
+    """"This function parses organism in database.
+    Input is list with organisms.
+    """
     organism = list[0]
 
     org_id = get_org_id(organism)
@@ -116,6 +175,9 @@ def parse_organism(list):
 
 
 def parse_protein(list):
+    """"This function parses protein in database.
+    Input is list with proteins.
+    """
     protein = list[0]
 
     prot_id = get_prot_id(protein)
@@ -131,7 +193,11 @@ def parse_protein(list):
 
 
 def parse_reference_seq(list):
+    """"This function parses reference seq in database.
+    Input is list with sequences.
+    """
     sequence = list[0]
+    # print(sequence)
 
     refseq_id = get_refseq_id(sequence)
     if refseq_id is None:
@@ -143,6 +209,8 @@ def parse_reference_seq(list):
         sql_connection.commit()
         cursor.close()
         sql_connection.close()
+
+    print("asdfasdfasdf", get_refseq_id(sequence))
 
     cursor, sql_connection = get_cursor()
 
@@ -160,6 +228,9 @@ def parse_reference_seq(list):
 
 
 def parse_reference_header(list):
+    """"This function parses reference header in database.
+    Input is list with headers.
+    """
     header = list[0]
 
     refheader_id = get_refheader_id(header)
@@ -175,12 +246,11 @@ def parse_reference_header(list):
 
 
 def parse_information(list):
+    """"This function parses information tab in database.
+    Input is current time and seq_id
+    """
     seq_id = list[0]
-    print(seq_id)
-    print(seq_id)
     today = date.today()
-
-    print(today)
 
     cursor, sql_connection = get_cursor()
     cursor.execute(
@@ -191,10 +261,12 @@ def parse_information(list):
     cursor.close()
     sql_connection.close()
 
-def update_information(seq_id):
-    today = date.today()
 
-    print(today)
+def update_information(seq_id):
+    """"This function updates information tab in database.
+    Input is current time and seq_id
+    """
+    today = date.today()
 
     cursor, sql_connection = get_cursor()
     cursor.execute(
@@ -206,10 +278,14 @@ def update_information(seq_id):
     cursor.close()
     sql_connection.close()
 
+
 def get_seq_id(sequence):
+    """"This function gets seq id.
+    Input is a sequence.
+    Output are results.
+    """
     cursor, sql_connection = get_cursor()
 
-    print(sequence)
     cursor.execute(
         "select seq_id "
         "from sequence "
@@ -222,12 +298,14 @@ def get_seq_id(sequence):
     cursor.close()
     sql_connection.close()
 
-    print(results)
-
-
     return results
 
+
 def get_refseq_id(sequence):
+    """"This function gets refseq id.
+    Input is a sequence.
+    Output are results.
+    """
     cursor, sql_connection = get_cursor()
 
     cursor.execute(
@@ -244,6 +322,10 @@ def get_refseq_id(sequence):
 
 
 def get_refheader_id(header):
+    """"This function gets refheader id.
+    Input is a header.
+    Output are results.
+    """
     cursor, sql_connection = get_cursor()
 
     cursor.execute(
@@ -260,6 +342,10 @@ def get_refheader_id(header):
 
 
 def get_orf_id(orf_sequence):
+    """"This function gets ORF id.
+    Input is a orf sequence.
+    Output are results.
+    """
     cursor, sql_connection = get_cursor()
 
     cursor.execute(
@@ -277,6 +363,10 @@ def get_orf_id(orf_sequence):
 
 
 def get_org_id(organism):
+    """"This function gets organism id.
+    Input is a organism.
+    Output are results.
+    """
     cursor, sql_connection = get_cursor()
 
     cursor.execute(
@@ -294,6 +384,10 @@ def get_org_id(organism):
 
 
 def get_prot_id(protein):
+    """"This function gets protein id.
+    Input is a protein.
+    Output are results.
+    """
     cursor, sql_connection = get_cursor()
 
     cursor.execute(
@@ -312,9 +406,6 @@ def get_prot_id(protein):
 
 def set_connection():
     """"This function sets a connection to a database (Ossux).
-    (During blasting password input was pre-filled. For privacy reasons,
-    the password was changed to an input field)
-    Input is a password.
     Output is an SQL_connection.
     """
 
@@ -328,7 +419,33 @@ def set_connection():
 
 
 def get_cursor():
+    """"This function gets a cursor and a connection to a database.
+    """
     sql_connection = set_connection()
     cursor = sql_connection.cursor(buffered=True)
 
     return cursor, sql_connection
+
+
+def temp_reader():
+    """"This function reads a temporary file, made by the GUI.
+     Output is multiple lists for headers, sequences, orfseqs,
+     startpost and endpos
+    """
+    orfseqs, startpos, endpos = [], [], []
+    with open('temp.txt', 'r') as file:
+        data = file.read()
+    data = data.split("\n")
+    header = data[0];
+    sequence = data[2];
+    for i in range(len(data) - 4):
+        if i % 2 == 0:
+            if data[i + 4] != "":
+                startpos.append(data[i + 4].split(" ")[0])
+                endpos.append(data[i + 4].split(" ")[1])
+        else:
+            orfseqs.append(data[i + 4])
+
+    return header, sequence, orfseqs, startpos, endpos
+
+main()
